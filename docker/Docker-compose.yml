@@ -1,0 +1,94 @@
+services:
+
+  mongo:
+    image: mongo:6
+    container_name: mongo
+
+    restart: unless-stopped
+
+    environment:
+      - TZ=Asia/Kolkata
+
+    volumes:
+      - mongo_data:/data/db
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    container_name: opensearch
+
+    restart: unless-stopped
+
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+      - plugins.security.disabled=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Tiwari@321
+      - TZ=Asia/Kolkata
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+ volumes:
+      - opensearch_data:/usr/share/opensearch/data
+
+  graylog:
+    image: graylog/graylog:6.0
+    container_name: graylog
+
+    restart: unless-stopped
+
+    depends_on:
+      - mongo
+      - opensearch
+
+    environment:
+      - TZ=Asia/Kolkata
+      - GRAYLOG_ROOT_TIMEZONE=Asia/Kolkata
+
+      - GRAYLOG_PASSWORD_SECRET=myverystrongsecretkey123
+
+      - GRAYLOG_ROOT_PASSWORD_SHA2=c5d042bffb1e249604cc3ee528e173b371be5dd0>
+
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://opensearch:9200
+
+    ports:
+      # Graylog Web UI
+      - "9000:9000"
+
+      # OpenSearch access
+      - "9200:9200"
+
+      # Syslog TCP/UDP
+      - "1514:1514"
+      - "1514:1514/udp"
+  # GELF TCP/UDP
+      - "12201:12201/tcp"
+      - "12201:12201/udp"
+
+      # Beats input
+      - "5044:5044"
+
+      # Raw TCP input
+      - "5555:5555"
+
+      # Raw UDP input
+      - "5555:5555/udp"
+
+      # Additional custom TCP log port
+      - "5140:5140"
+
+    volumes:
+      - graylog_data:/usr/share/graylog/data
+
+volumes:
+  mongo_data:
+  opensearch_data:
+  graylog_data:
+
